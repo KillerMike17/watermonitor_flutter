@@ -1,47 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:login_ui/pages/notificaiton/notification_page.dart';
 
-class SupportTicketApp extends StatelessWidget {
+class CreateSupportTicketPage extends StatefulWidget {
+  // const CreateSupportTicketPage({super.key});
+
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Support Ticket',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Colors.white,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.blue,
-          foregroundColor: Colors.white,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            textStyle: const TextStyle(fontSize: 16),
-          ),
-        ),
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.blue),
-          ),
-        ),
-      ),
-      home: SupportTicketPage(),
-    );
-  }
+  _CreateSupportTicketPageState createState() => _CreateSupportTicketPageState();
 }
 
-class SupportTicketPage extends StatefulWidget {
-  @override
-  _SupportTicketPageState createState() => _SupportTicketPageState();
-}
-
-class _SupportTicketPageState extends State<SupportTicketPage> {
+class _CreateSupportTicketPageState extends State<CreateSupportTicketPage> {
   final TextEditingController _descriptionController = TextEditingController();
   String? _selectedIssueType;
-  final List<String> _issueTypes = ['Sensor', 'Connection', 'Hardware', 'Other'];
+  final List<String> _issueTypes = [
+    'Sensor',
+    'Connection',
+    'Hardware',
+    'Other'
+  ];
 
   void _submitTicket() {
     final description = _descriptionController.text;
@@ -54,57 +29,68 @@ class _SupportTicketPageState extends State<SupportTicketPage> {
       return;
     }
 
-    Navigator.pop(context, {'issueType': issueType, 'description': description});
+    Navigator.pop(
+        context, {'issueType': issueType, 'description': description});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('Create Support Ticket'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+      appBar: AppBar(
+        title: const Text('Create Support Ticket'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationPage()),
+              );
             },
           ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: _descriptionController,
+              maxLines: 5,
+              decoration: const InputDecoration(
+                hintText: 'Enter a detailed description...',
+              ),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _selectedIssueType,
+              hint: const Text('Choose an issue type'),
+              items: _issueTypes.map((String type) {
+                return DropdownMenuItem<String>(
+                  value: type,
+                  child: Text(type),
+                );
+              }).toList(),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedIssueType = newValue;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _submitTicket,
+              icon: const Icon(Icons.send),
+              label: const Text('Submit Ticket'),
+            ),
+          ],
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextField(
-                controller: _descriptionController,
-                maxLines: 5,
-                decoration: const InputDecoration(
-                  hintText: 'Enter a detailed description...',
-                ),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _selectedIssueType,
-                hint: const Text('Choose an issue type'),
-                items: _issueTypes.map((String type) {
-                  return DropdownMenuItem<String>(
-                    value: type,
-                    child: Text(type),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedIssueType = newValue;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: _submitTicket,
-                icon: const Icon(Icons.send),
-                label: const Text('Submit Ticket'),
-              ),
-            ],
-          ),
-        ));
+      ),
+    );
   }
 }

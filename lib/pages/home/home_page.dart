@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:login_ui/pages/notificaiton/notification_page.dart';
+import 'package:login_ui/widgets/custom_drawer.dart';
 
 void main() {
   runApp(WaterMonitoringApp());
@@ -10,7 +11,7 @@ class WaterMonitoringApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Water Monitoring Dashboard',
+      // title: 'Water Monitoring Dashboard',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -66,6 +67,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: CustomDrawer(),
       appBar: AppBar(
         title: Text('Water Monitoring Dashboard'),
         actions: [
@@ -128,7 +130,8 @@ class _DashboardPageState extends State<DashboardPage> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   trailing: IconButton(
-                    icon: Icon(_showSensors ? Icons.expand_less : Icons.expand_more),
+                    icon: Icon(
+                        _showSensors ? Icons.expand_less : Icons.expand_more),
                     onPressed: () {
                       setState(() {
                         _showSensors = !_showSensors;
@@ -159,7 +162,8 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildCard(BuildContext context, String title, String subtitle, IconData icon, Color color, String level) {
+  Widget _buildCard(BuildContext context, String title, String subtitle,
+      IconData icon, Color color, String level) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
@@ -185,7 +189,14 @@ class _DashboardPageState extends State<DashboardPage> {
             SizedBox(height: 8),
             Text(
               'Level: $level',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: level == 'Good' ? Colors.green : level == 'Bad' ? Colors.orange : Colors.red),
+              style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: level == 'Good'
+                      ? Colors.green
+                      : level == 'Bad'
+                          ? Colors.orange
+                          : Colors.red),
             ),
           ],
         ),
@@ -218,7 +229,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   setState(() {
                     _selectedDate = newValue;
                   });
-                } 
+                }
               },
               items: _monthlyConsumptionData.keys.map((String key) {
                 return DropdownMenuItem<String>(

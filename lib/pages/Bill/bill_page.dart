@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:login_ui/pages/notificaiton/notification_page.dart';
+import 'package:login_ui/widgets/custom_drawer.dart';
 import 'bill_payment.dart';
 
 void main() {
@@ -25,7 +27,8 @@ class BillingPage extends StatefulWidget {
 }
 
 class _BillingPageState extends State<BillingPage> {
-  final TextEditingController _accountNumberController = TextEditingController();
+  final TextEditingController _accountNumberController =
+      TextEditingController();
 
   void _submitAccountNumber() {
     final accountNumber = _accountNumberController.text;
@@ -53,8 +56,20 @@ class _BillingPageState extends State<BillingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: CustomDrawer(),
       appBar: AppBar(
-        title: Text('Billing Page'),
+        title: const Text('Billing'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -63,7 +78,10 @@ class _BillingPageState extends State<BillingPage> {
           children: [
             Text(
               'Enter your Account Number:',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue),
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue),
             ),
             SizedBox(height: 16),
             TextField(
@@ -75,7 +93,8 @@ class _BillingPageState extends State<BillingPage> {
                 hintText: 'Account Number',
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding: EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+                contentPadding:
+                    EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
               ),
             ),
             SizedBox(height: 16),

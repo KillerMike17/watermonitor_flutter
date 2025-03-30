@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:login_ui/pages/notificaiton/notification_page.dart';
+import 'package:login_ui/widgets/custom_drawer.dart';
 
 void main() {
   runApp(ProfileApp());
@@ -31,7 +33,8 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (context) {
-        TextEditingController nameController = TextEditingController(text: name);
+        TextEditingController nameController =
+            TextEditingController(text: name);
         return AlertDialog(
           title: Text('Edit Name'),
           content: TextField(
@@ -64,7 +67,8 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (context) {
-        TextEditingController addressController = TextEditingController(text: address);
+        TextEditingController addressController =
+            TextEditingController(text: address);
         return AlertDialog(
           title: Text('Edit Address'),
           content: TextField(
@@ -124,13 +128,18 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: CustomDrawer(),
       appBar: AppBar(
-        title: Text('Profile'),
-        backgroundColor: Colors.blue, // Blue title bar
+        title: const Text('Profile'),
         actions: [
           IconButton(
-            icon: Icon(Icons.edit),
-            onPressed: _editName,
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => NotificationPage()),
+              );
+            },
           ),
         ],
       ),
