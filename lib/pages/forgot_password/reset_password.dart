@@ -71,7 +71,7 @@ class ResetPasswordScreen extends StatelessWidget {
                           validator: (value) {
                             if (value != null) {
                               return "Please Enter your  password";
-                            } else if (value != null && value.length < 8) {
+                            } else if (value != null && value.length < 6) {
                               return "Password is too short";
                             }
                             return null;

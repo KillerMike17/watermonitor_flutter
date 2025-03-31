@@ -7,7 +7,7 @@ import '../otp/otp_screen.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
-  String? phoneNumber;
+  String? email;
   bool fromSignup = false;
   @override
   Widget build(BuildContext context) {
@@ -65,7 +65,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                       labelText: "Phone Number",
                       border: OutlineInputBorder(),
                     ),
-                    onSaved: (newValue) => phoneNumber = newValue,
+                    onSaved: (newValue) => email = newValue,
                     validator: (String? value) {
                       final phoneNo = RegExp(r'^0(9)\d{8}$');
                       if (value!.isEmpty) {
@@ -92,7 +92,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(
                           builder: (context) => otpScreen(
-                              phoneNumber: phoneNumber.toString(),
+                              email: email.toString(),
                               fromSignup: fromSignup),
                         ),
                         (route) => false,

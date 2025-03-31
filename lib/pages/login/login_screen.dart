@@ -1,9 +1,11 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
-
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:login_ui/main.dart';
 import 'package:login_ui/pages/forgot_password/forgot_password_Screen.dart';
 import 'package:login_ui/pages/sign_up/sign_up_screen.dart';
+import 'package:login_ui/providers/auth_provider.dart';
+import 'package:login_ui/services/api_service.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -14,11 +16,13 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  String? phoneNumber;
+  final ApiService _apiService = ApiService();
+  String? email;
   String? password;
   bool? remember = false;
   bool isHoveringForgotPassword = false;
-  bool isHoveringTerms = false; // New variable for "Terms & Service" hover effect
+  bool isHoveringTerms = false;
+  bool isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -46,198 +50,303 @@ class _LoginScreenState extends State<LoginScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             Expanded(
-                child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                Column(
+              child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget>[
-                    const Text(
-                      "Login",
-                      style: TextStyle(
-                          fontSize: 30, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      "Login to your account",
-                      style: TextStyle(fontSize: 15, color: Colors.grey[700]),
-                    )
-                  ],
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Column(
-                    children: <Widget>[
-                      inputFields(),
-                      SizedBox(height: 10),
-                      Row(children: [
-                        Checkbox(
-                          value: remember,
-                          activeColor: Colors.blue,
-                          onChanged: (value) {
-                            setState(() {
-                              remember = value;
-                            });
-                          },
+                    Column(
+                      children: <Widget>[
+                        const Text(
+                          "Login",
+                          style: TextStyle(
+                              fontSize: 30, fontWeight: FontWeight.bold),
                         ),
-                        Text("Remember me"),
-                        Spacer(),
-                        MouseRegion(
-                          onEnter: (_) => setState(() => isHoveringForgotPassword = true),
-                          onExit: (_) => setState(() => isHoveringForgotPassword = false),
-                          child: GestureDetector(
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ForgotPasswordScreen(),
+                        const SizedBox(height: 20),
+                        Text(
+                          "Login to your account",
+                          style:
+                              TextStyle(fontSize: 15, color: Colors.grey[700]),
+                        )
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      child: Column(
+                        children: <Widget>[
+                          inputFields(),
+                          SizedBox(height: 10),
+                          Row(children: [
+                            Checkbox(
+                              value: remember,
+                              activeColor: Colors.blue,
+                              onChanged: (value) {
+                                setState(() {
+                                  remember = value;
+                                });
+                              },
+                            ),
+                            Text("Remember me"),
+                            Spacer(),
+                            MouseRegion(
+                              onEnter: (_) => setState(
+                                  () => isHoveringForgotPassword = true),
+                              onExit: (_) => setState(
+                                  () => isHoveringForgotPassword = false),
+                              child: GestureDetector(
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ForgotPasswordScreen(),
+                                  ),
+                                ),
+                                child: Text(
+                                  "Forgot Password?",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: isHoveringForgotPassword
+                                        ? Colors.black
+                                        : Colors.blue,
+                                  ),
+                                ),
                               ),
                             ),
+                          ]),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(50),
+                        ),
+                        child: MaterialButton(
+                          minWidth: double.infinity,
+                          height: 60,
+                          onPressed: isLoading ? null : _handleLogin,
+                          color: Colors.blue,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: isLoading
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                              : const Text(
+                                  "Login",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 18,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Text("Don't have an account?"),
+                        TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => SignupScreen()));
+                            },
                             child: Text(
-                              "Forgot Password?",
+                              "Sign up",
                               style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blue,
+                                fontSize: 15,
+                              ),
+                            )),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        MouseRegion(
+                          onEnter: (_) =>
+                              setState(() => isHoveringTerms = true),
+                          onExit: (_) =>
+                              setState(() => isHoveringTerms = false),
+                          child: GestureDetector(
+                            onTap: () {
+                              // Navigate to terms and service page
+                            },
+                            child: Text(
+                              "Terms & Service",
+                              style: TextStyle(
+                                color: isHoveringTerms
+                                    ? Colors.black
+                                    : Colors.blue,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: isHoveringForgotPassword ? Colors.black : Colors.blue,
                               ),
                             ),
                           ),
                         ),
-                      ]),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(50),
-                    ),
-                    child: MaterialButton(
-                      minWidth: double.infinity,
-                      height: 60,
-                      onPressed: () {
-                        final isValidForm = _formKey.currentState!.validate();
-                        if (isValidForm) {
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (context) => HomePage(),
-                            ),
-                            (route) => false,
-                          );
-                        }
-                      },
-                      color: Colors.blue,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: const Text(
-                        "Login",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 18,
-                          color: Colors.white,
+                        SizedBox(height: 10),
+                        Text(
+                          "© 2025 YourCompany. All rights reserved.",
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
                         ),
-                      ),
+                      ],
                     ),
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Text("Don't have an account?"),
-                    TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => SignupScreen()));
-                        },
-                        child: Text(
-                          "Sign up",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.blue,
-                            fontSize: 15,
-                          ),
-                        )),
-                  ],
-                ),
-                Column(
-                  children: [
-                    MouseRegion(
-                      onEnter: (_) => setState(() => isHoveringTerms = true),
-                      onExit: (_) => setState(() => isHoveringTerms = false),
-                      child: GestureDetector(
-                        onTap: () {
-                          // Navigate to your terms and service page
-                          // Example: Navigator.push(context, MaterialPageRoute(builder: (context) => TermsScreen()));
-                        },
-                        child: Text(
-                          "Terms & Service",
-                          style: TextStyle(
-                            color: isHoveringTerms ? Colors.black : Colors.blue,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      "© 2025 YourCompany. All rights reserved.",
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ],
-            ))
+                  ]),
+            )
           ],
         ),
       ),
     );
   }
 
+  Future<void> _handleLogin() async {
+    // Validate form first
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    // Save form data
+    _formKey.currentState!.save();
+
+    setState(() => isLoading = true);
+
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // Call API
+      final response = await _apiService.login(email!, password!);
+
+      // Close loading dialog
+      Navigator.of(context).pop();
+
+      print(response.statusCode);
+
+      // Handle successful login
+      if (response.statusCode == 201) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Login successful!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // await Provider.of<AuthProvider>(context, listen: false).login(
+        //   response.data['accessToken.authToken'],
+        //   email!,
+        // );
+
+        // Navigate to home and clear all previous routes
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => HomePage()),
+          (route) => false,
+        );
+      } else {
+        // Handle API errors (non-200 responses)
+        final errorMessage = response.data['message'] ?? 'Login failed';
+        throw Exception(errorMessage);
+      }
+    } on DioException catch (e) {
+      // Close loading dialog if still open
+      Navigator.of(context).pop();
+
+      // Handle Dio-specific errors
+      final errorMessage = ApiService.handleError(e);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMessage),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e) {
+      // Close loading dialog if still open
+      Navigator.of(context).pop();
+
+      // Handle generic errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
   Widget inputFields() {
     return Form(
-        key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: Column(children: [
-          //phone field
-          TextFormField(
-            keyboardType: TextInputType.phone,
-            decoration: const InputDecoration(
-              labelText: "Phone Number",
-              border: OutlineInputBorder(),
-            ),
-            onSaved: (newValue) => phoneNumber = newValue,
-            validator: (String? value) {
-              final phoneNo = RegExp(r'^0(9)\d{8}$');
-              if (value!.isEmpty) {
-                return "Please Enter a valid number (ex. 0920 10 10 10)";
-              } else if (phoneNo.hasMatch(value) == false) {
-                return "";
-              }
-              return null;
-            },
+      key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: Column(children: [
+        TextFormField(
+          keyboardType: TextInputType.emailAddress,
+          decoration: const InputDecoration(
+            labelText: "Email",
+            border: OutlineInputBorder(),
           ),
-          SizedBox(height: 20),
-          //password field
-          TextFormField(
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: "Password",
-              border: OutlineInputBorder(),
-            ),
-            onSaved: (newValue) => password = newValue,
-            validator: (value) {
-              if (value!.isEmpty) {
-                return "Please Enter your password";
-              } else if (value.length < 8) {
-                return "Password is too short";
-              }
-              return null;
-            },
+          onSaved: (newValue) => email = newValue,
+          validator: (String? value) {
+            final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+$');
+            if (value!.isEmpty) {
+              return "Please Enter your email";
+            } else if (!emailRegex.hasMatch(value)) {
+              return "Please Enter a valid email";
+            }
+            return null;
+          },
+        ),
+        SizedBox(height: 20),
+        TextFormField(
+          obscureText: true,
+          decoration: const InputDecoration(
+            labelText: "Password",
+            border: OutlineInputBorder(),
+            // suffixIcon: IconButton(
+            //   icon: Icon(
+            //     _obscurePassword ? Icons.visibility : Icons.visibility_off,
+            //   ),
+            //   onPressed: () {
+            //     setState(() {
+            //       _obscurePassword = !_obscurePassword;
+            //     });
+            //   },
+            // ),
           ),
-        ]));
+          onSaved: (newValue) => password = newValue,
+          validator: (value) {
+            if (value!.isEmpty) {
+              return "Please Enter your password";
+            } else if (value.length < 6) {
+              return "Password is too short";
+            }
+            return null;
+          },
+        ),
+      ]),
+    );
   }
 }

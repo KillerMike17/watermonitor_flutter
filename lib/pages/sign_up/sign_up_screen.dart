@@ -9,7 +9,7 @@ import '../otp/otp_screen.dart';
 class SignupScreen extends StatelessWidget {
   final _formKey = GlobalKey<FormState>();
   String? firstName;
-  String? phoneNumber;
+  String? email;
   String? password;
   String? confirm_password;
   bool remember = false;
@@ -80,7 +80,7 @@ class SignupScreen extends StatelessWidget {
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(
                           builder: (context) => otpScreen(
-                              phoneNumber: phoneNumber.toString(),
+                              email: email.toString(),
                               fromSignup: fromSignup),
                         ),
                         (route) => false,
@@ -160,7 +160,7 @@ class SignupScreen extends StatelessWidget {
               labelText: "Phone Number",
               border: OutlineInputBorder(),
             ),
-            onSaved: (newValue) => phoneNumber = newValue,
+            onSaved: (newValue) => email = newValue,
             validator: (String? value) {
               final phoneNo = RegExp(r'^0(9)\d{8}$');
               if (value!.isEmpty) {
@@ -186,7 +186,7 @@ class SignupScreen extends StatelessWidget {
             validator: (value) {
               if (value!.isEmpty) {
                 return "Please Enter your password";
-              } else if (value.length < 8) {
+              } else if (value.length < 6) {
                 return "Password is too short";
               }
               return null;
@@ -254,7 +254,7 @@ class SignupScreen extends StatelessWidget {
 //           border: OutlineInputBorder(),
 //           // hintText: "Enter Your Phone Number",
 //         ),
-//         onSaved: (newValue) => phoneNumber = newValue,
+//         onSaved: (newValue) => email = newValue,
 //         validator: (String? value) {
 //           final phoneNo = RegExp(r'^0(9)\d{8}$');
 //           if (value!.isEmpty) {

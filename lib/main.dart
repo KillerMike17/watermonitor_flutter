@@ -1,78 +1,160 @@
 import 'package:flutter/material.dart';
-
 import 'package:login_ui/pages/Bill/bill_page.dart';
-
 import 'package:login_ui/pages/SupportTicket/ticket_screen.dart';
-
 import 'package:login_ui/pages/home/home_page.dart';
+import 'package:login_ui/pages/login/login_screen.dart';
+import 'package:login_ui/providers/auth_provider.dart';
+import 'package:login_ui/widgets/custom_drawer.dart';
+import 'package:provider/provider.dart';
 
-import 'package:login_ui/pages/profile/profile.dart';
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => AuthProvider(),
+      child: const MyApp(),
+    ),
+  );
+}
 
-import 'package:login_ui/pages/hamburger/hamburger.dart';
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
-void main() {
-  runApp(const MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: HomePage(),
-  ));
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Your App Name',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: const AuthWrapper(),
+    );
+  }
+}
+
+class AuthWrapper extends StatefulWidget {
+  const AuthWrapper({Key? key}) : super(key: key);
+
+  @override
+  State<AuthWrapper> createState() => _AuthWrapperState();
+}
+
+class _AuthWrapperState extends State<AuthWrapper> {
+  late Future _initializeFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeFuture =
+        Provider.of<AuthProvider>(context, listen: false).initialize();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: _initializeFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        return Consumer<AuthProvider>(
+          builder: (context, auth, child) {
+            return auth.isAuthenticated
+                ? const HomePage()
+                : const LoginScreen();
+          },
+        );
+      },
+    );
+  }
 }
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
   @override
-  _HomePageState createState() => _HomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0; // Track the selected index
+  int _selectedIndex = 0;
 
-  // List of pages corresponding to each BottomNavigationBarItem
-
+  // Initialize your pages properly
   final List<Widget> _pages = [
-    DashboardPage(), // Replace with your actual DashboardPage
-
-    BillingPage(), // Your Billing page
-
-    TicketListPage(), // Your Support Ticket page
-
-    ProfilePage(), // Your Profile page
+     DashboardPage(),
+    BillingPage(),
+    TicketListPage(),
   ];
 
   void _onItemTapped(int index) {
     setState(() {
-      _selectedIndex = index; // Update the selected index
+      _selectedIndex = index;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex], // Display the selected page
-
+      // appBar: AppBar(
+      //   title: const Text('Your Aghjgjhg'),
+      //   actions: [
+      //     IconButton(
+      //       icon: const Icon(Icons.logout),
+      //       onPressed: () async {
+      //         await Provider.of<AuthProvider>(context, listen: false).logout();
+      //       },
+      //     ),
+      //   ],
+      // ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages, // This maintains state of all pages
+      ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'Billing'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.support), label: 'Support Ticket'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+            icon: Icon(Icons.support),
+            label: 'Support Ticket',
+          ),
         ],
-
-        currentIndex: _selectedIndex, // Set the current index
-
-        onTap: _onItemTapped, // Handle taps
-
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
       ),
+      drawer: CustomDrawer(),
     );
   }
 }
 
-class HomePageContent extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-        child: Text('Dashboard')); // Replace with actual dashboard content
-  }
-}
+// class DashboardPage extends StatelessWidget {
+//   const DashboardPage({Key? key}) : super(key: key);
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final userEmail = Provider.of<AuthProvider>(context).userEmail;
+
+//     return Center(
+//       child: Column(
+//         mainAxisAlignment: MainAxisAlignment.center,
+//         children: [
+//           const Text(
+//             'Welcome to Your Dashboard',
+//             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+//           ),
+//           const SizedBox(height: 20),
+//           Text(
+//             'Logged in as: $userEmail',
+//             style: const TextStyle(fontSize: 16),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }

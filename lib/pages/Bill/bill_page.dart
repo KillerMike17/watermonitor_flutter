@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:login_ui/pages/notificaiton/notification_page.dart';
-import 'package:login_ui/widgets/custom_drawer.dart';
 import 'bill_payment.dart';
 
 void main() {
@@ -11,11 +9,11 @@ class BillingApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Billing Page',
+      title: 'BILLING',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      debugShowCheckedModeBanner: false, // Disable debug banner
+      debugShowCheckedModeBanner: false,
       home: BillingPage(),
     );
   }
@@ -27,88 +25,71 @@ class BillingPage extends StatefulWidget {
 }
 
 class _BillingPageState extends State<BillingPage> {
-  final TextEditingController _accountNumberController =
-      TextEditingController();
+  final TextEditingController _accountNumberController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   void _submitAccountNumber() {
-    final accountNumber = _accountNumberController.text;
-
-    if (accountNumber.isEmpty) {
-      // Show error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please enter your account number')),
+    if (_formKey.currentState!.validate()) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BillingDetailsPage(
+            accountNumber: _accountNumberController.text,
+          ),
+        ),
       );
-      return;
+      _accountNumberController.clear();
     }
-
-    // Navigate to BillingDetailsPage with the account number
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BillingDetailsPage(accountNumber: accountNumber),
-      ),
-    );
-
-    // Clear input field
-    _accountNumberController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: CustomDrawer(),
       appBar: AppBar(
-        title: const Text('Billing'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => NotificationPage()),
-              );
-            },
-          ),
-        ],
+        title: const Text('Account Lookup'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Enter your Account Number:',
-              style: TextStyle(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Enter your account number',
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue),
-            ),
-            SizedBox(height: 16),
-            TextField(
-              controller: _accountNumberController,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                hintText: 'Account Number',
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding:
-                    EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
-              ),
-            ),
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _submitAccountNumber,
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 16.0),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0),
                 ),
               ),
-              child: Text('Submit', style: TextStyle(fontSize: 16)),
-            ),
-          ],
+              SizedBox(height: 20),
+              Form(
+                key: _formKey,
+                child: TextFormField(
+                  controller: _accountNumberController,
+                  decoration: InputDecoration(
+                    labelText: 'Account Number',
+                    border: OutlineInputBorder(),
+                    hintText: '123456789',
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your account number';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _submitAccountNumber,
+                child: Text('Submit'),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

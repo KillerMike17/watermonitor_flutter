@@ -36,17 +36,17 @@ class _ProfilePageState extends State<ProfilePage> {
         TextEditingController nameController =
             TextEditingController(text: name);
         return AlertDialog(
-          title: Text('Edit Name'),
+          title: const Text('Edit Name'),
           content: TextField(
             controller: nameController,
-            decoration: InputDecoration(labelText: 'Name'),
+            decoration: const InputDecoration(labelText: 'Name'),
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
@@ -55,7 +55,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 });
                 Navigator.of(context).pop();
               },
-              child: Text('Save'),
+              child: const Text('Save'),
             ),
           ],
         );
@@ -70,17 +70,17 @@ class _ProfilePageState extends State<ProfilePage> {
         TextEditingController addressController =
             TextEditingController(text: address);
         return AlertDialog(
-          title: Text('Edit Address'),
+          title: const Text('Edit Address'),
           content: TextField(
             controller: addressController,
-            decoration: InputDecoration(labelText: 'Address'),
+            decoration: const InputDecoration(labelText: 'Address'),
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
@@ -89,7 +89,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 });
                 Navigator.of(context).pop();
               },
-              child: Text('Save'),
+              child: const Text('Save'),
             ),
           ],
         );
@@ -103,21 +103,21 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Logout'),
-          content: Text('Are you sure you want to log out?'),
+          title: const Text('Logout'),
+          content: const Text('Are you sure you want to log out?'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
                 // Perform logout action
                 Navigator.of(context).pop();
               },
-              child: Text('Logout'),
+              child: const Text('Logout'),
             ),
           ],
         );
@@ -131,6 +131,10 @@ class _ProfilePageState extends State<ProfilePage> {
       drawer: CustomDrawer(),
       appBar: AppBar(
         title: const Text('Profile'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
@@ -158,33 +162,33 @@ class _ProfilePageState extends State<ProfilePage> {
                 color: Colors.grey[600],
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               name,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 8),
-            Text(
+            const SizedBox(height: 8),
+            const Text(
               '+2519292085135',
               style: TextStyle(fontSize: 18, color: Colors.grey),
             ),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
             Expanded(
               child: ListView(
                 children: [
                   ListTile(
-                    leading: Icon(Icons.location_on),
+                    leading: const Icon(Icons.location_on),
                     title: Text(address),
-                    trailing: Icon(Icons.arrow_forward_ios),
+                    trailing: const Icon(Icons.arrow_forward_ios),
                     onTap: _editAddress,
                   ),
-                  ListTile(
+                  const ListTile(
                     leading: Icon(Icons.language),
                     title: Text('Language'),
                     subtitle: Text('English'),
                     trailing: Icon(Icons.arrow_forward_ios),
                   ),
-                  ListTile(
+                  const ListTile(
                     leading: Icon(Icons.privacy_tip),
                     title: Text('Privacy Policy'),
                     trailing: Icon(Icons.arrow_forward_ios),
@@ -192,19 +196,19 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _logout,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
-                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               ),
-              child: Text(
+              child: const Text(
                 'Logout',
                 style: TextStyle(fontSize: 18, color: Colors.white),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
           ],
         ),
       ),

@@ -9,9 +9,9 @@ import '../../constants.dart';
 
 class otpScreen extends StatelessWidget {
   final bool fromSignup;
-  final String phoneNumber;
+  final String email;
   const otpScreen(
-      {Key? Key, required this.phoneNumber, required this.fromSignup})
+      {Key? Key, required this.email, required this.fromSignup})
       : super(key: Key);
 
   @override
@@ -50,7 +50,7 @@ class otpScreen extends StatelessWidget {
                     height: 20,
                   ),
                   Text(
-                    "Verification code has been sent to ${phoneNumber}",
+                    "Verification code has been sent to ${email}",
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey[700], fontSize: 15),
                   ),

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:login_ui/pages/notificaiton/notification_page.dart';
 
 class CreateSupportTicketPage extends StatefulWidget {
-  // const CreateSupportTicketPage({super.key});
-
   @override
   _CreateSupportTicketPageState createState() => _CreateSupportTicketPageState();
 }
@@ -12,9 +10,10 @@ class _CreateSupportTicketPageState extends State<CreateSupportTicketPage> {
   final TextEditingController _descriptionController = TextEditingController();
   String? _selectedIssueType;
   final List<String> _issueTypes = [
-    'Sensor',
-    'Connection',
-    'Hardware',
+    'Sensor Issue',
+    'Connection Problem',
+    'Hardware Fault',
+    'Software Bug',
     'Other'
   ];
 
@@ -24,27 +23,64 @@ class _CreateSupportTicketPageState extends State<CreateSupportTicketPage> {
 
     if (description.isEmpty || issueType == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+        SnackBar(
+          content: Text('Please fill in all fields'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
       );
       return;
     }
 
-    Navigator.pop(
-        context, {'issueType': issueType, 'description': description});
+    // Show confirmation dialog before submitting
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Confirm Submission'),
+        content: Text('Are you sure you want to submit this support ticket?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(
+                context, 
+                {'issueType': issueType, 'description': description}
+              );
+            },
+            child: Text('Submit'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).primaryColor,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Support Ticket'),
+        title: Text(
+          'Create Support Ticket',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications),
+            icon: Icon(Icons.notifications),
             onPressed: () {
               Navigator.push(
                 context,
@@ -53,40 +89,117 @@ class _CreateSupportTicketPageState extends State<CreateSupportTicketPage> {
             },
           ),
         ],
+        elevation: 0,
+        centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
-              controller: _descriptionController,
-              maxLines: 5,
-              decoration: const InputDecoration(
-                hintText: 'Enter a detailed description...',
+            Text(
+              'Describe your issue',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
               ),
             ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedIssueType,
-              hint: const Text('Choose an issue type'),
-              items: _issueTypes.map((String type) {
-                return DropdownMenuItem<String>(
-                  value: type,
-                  child: Text(type),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedIssueType = newValue;
-                });
-              },
+            SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 2,
+                    blurRadius: 5,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _descriptionController,
+                maxLines: 8,
+                decoration: InputDecoration(
+                  hintText: 'Provide detailed information about the issue you\'re experiencing...',
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.all(16),
+                ),
+              ),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
+            SizedBox(height: 24),
+            Text(
+              'Issue Type',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
+            ),
+            SizedBox(height: 8),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 2,
+                    blurRadius: 5,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: DropdownButtonFormField<String>(
+                value: _selectedIssueType,
+                hint: Text('Select issue type'),
+                isExpanded: true,
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                ),
+                items: _issueTypes.map((String type) {
+                  return DropdownMenuItem<String>(
+                    value: type,
+                    child: Text(type),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedIssueType = newValue;
+                  });
+                },
+              ),
+            ),
+            SizedBox(height: 32),
+            ElevatedButton(
               onPressed: _submitTicket,
-              icon: const Icon(Icons.send),
-              label: const Text('Submit Ticket'),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.send, size: 20),
+                    SizedBox(width: 10),
+                    Text(
+                      'SUBMIT TICKET',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 3,
+              ),
             ),
           ],
         ),

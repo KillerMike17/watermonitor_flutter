@@ -43,20 +43,21 @@ class Hamburger extends StatelessWidget {
                 // Navigate to privacy policy
               },
             ),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Sign Out'),
-              onTap: () {
-                Navigator.pop(context);
-                // Handle sign out
-              },
-            ),
+          
             ListTile(
               leading: const Icon(Icons.info),
               title: const Text('About'),
               onTap: () {
                 Navigator.pop(context);
                 // Navigate to about page
+              },
+            ),
+              ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Sign Out'),
+              onTap: () {
+                Navigator.pop(context);
+                // Handle sign out
               },
             ),
           ],
