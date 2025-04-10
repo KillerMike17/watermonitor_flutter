@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:login_ui/main.dart';
@@ -6,6 +8,7 @@ import 'package:login_ui/pages/sign_up/sign_up_screen.dart';
 import 'package:login_ui/providers/auth_provider.dart';
 import 'package:login_ui/services/api_service.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -235,6 +238,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Handle successful login
       if (response.statusCode == 201) {
+      // Get SharedPreferences instance
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Save authentication token
+      if (response.data['authtoken']?['accessToken'] != null) {
+        await prefs.setString('accessToken', response.data['authtoken']['accessToken']);
+      }
+      
+      // Save user data
+      if (response.data['user'] != null) {
+        await prefs.setString('user', json.encode(response.data['user']));
+      }
+      
+      // Save login state
+      await prefs.setBool('isLoggedIn', true);
+
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
