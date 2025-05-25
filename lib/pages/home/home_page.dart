@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -16,10 +17,12 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   double flowRate = 0.0;
   double turbidityLevel = 0.0;
+  double? monthlyConsumption;
   bool _isConnected = false;
   bool _valveStatus = false; // false = closed, true = open
   bool _isTogglingValve = false;
   final ApiService _apiService = ApiService();
+  late StreamSubscription _wsSubscription;
 
   late WebSocketService _wsService;
 
@@ -27,6 +30,9 @@ class _DashboardPageState extends State<DashboardPage> {
     'Jan 2025': 150.0,
     'Feb 2025': 140.0,
     'Mar 2025': 160.0,
+
+
+
   };
 
   String _selectedDate = DateFormat('MMM yyyy').format(DateTime.now());
@@ -47,6 +53,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> _initializeWebSocket() async {
     final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString('user');
+  print('SharedPreferences keys: ${prefs.getKeys()}');
 
     if (userJson != null) {
       final decodedUser = json.decode(userJson) as Map<String, dynamic>;
@@ -55,37 +62,47 @@ class _DashboardPageState extends State<DashboardPage> {
       if (deviceId != null) {
         print('Device ID2: $deviceId');
 
-        _wsService = WebSocketService(deviceId);
-        _wsService.connect(
-            'http://localhost:3001'); // Replace with your IP if using real device/emulator
+       _wsService = WebSocketService(deviceId);
+_wsService.connect('https://water-monitoring-api-k06t.onrender.com');
 
-        _wsService.sensorStream.listen((data) {
-          setState(() {
-            flowRate = (data['flowRate'] ?? flowRate).toDouble();
-            turbidityLevel = (data['turbidity'] ?? turbidityLevel).toDouble();
-            _isConnected = true;
-            print('WebSocket data: $data');
-          });
-        }, onError: (error) {
-          setState(() {
-            _isConnected = false;
-          });
-          print('WebSocket error: $error');
-        }, onDone: () {
-          setState(() {
-            _isConnected = false;
-          });
-          print('WebSocket connection closed');
-        });
+_wsSubscription = _wsService.sensorStream.listen((data) {
+  if (mounted) {
+    setState(() {
+      flowRate = (data['flowRate'] ?? flowRate).toDouble();
+      turbidityLevel = (data['turbidity'] ?? turbidityLevel).toDouble();
+      monthlyConsumption = (data['monthlyConsumption'] as num?)?.toDouble();
+        _isConnected = true;
+      print('WebSocket data: $data');
+    });
+  }
+}, onError: (error) {
+  if (mounted) {
+    setState(() {
+      _isConnected = false;
+    });
+  }
+  print('WebSocket error: $error');
+}, onDone: () {
+  if (mounted) {
+    setState(() {
+      _isConnected = false;
+    });
+  }
+  print('WebSocket connection closed');
+});
+
       }
     }
   }
 
   @override
-  void dispose() {
-    _wsService.dispose();
-    super.dispose();
-  }
+void dispose() {
+  _wsSubscription.cancel();
+  _wsService.dispose();
+  super.dispose();
+}
+
+
 
   Color _getGaugeColor(double percentage) {
     if (percentage < 0.3) {
@@ -189,99 +206,63 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildMonthlyConsumptionCard() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Color(0xFF9C27B0).withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.calendar_today,
-                      size: 24, color: Color(0xFF9C27B0)),
+  return Card(
+    elevation: 2,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12.0),
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            children: [
+              Container(
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Color(0xFF9C27B0).withOpacity(0.2),
+                  shape: BoxShape.circle,
                 ),
-                SizedBox(height: 8),
-                Text(
-                  'Monthly Consumption',
+                child: Icon(Icons.calendar_today, size: 24, color: Color(0xFF9C27B0)),
+              ),
+              SizedBox(height: 8),
+              Text(
+                'Monthly Consumption',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: monthlyConsumption?.toStringAsFixed(1),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey[900],
+                  ),
+                ),
+                TextSpan(
+                  text: ' liters',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey[700],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Colors.grey[300]!),
-                  ),
-                  child: DropdownButton<String>(
-                    isExpanded: true,
-                    value: _selectedDate,
-                    underline: SizedBox(),
-                    icon: Icon(Icons.arrow_drop_down, size: 20),
-                    iconSize: 16,
-                    style: TextStyle(fontSize: 14),
-                    onChanged: (String? newValue) {
-                      if (newValue != null && newValue != _selectedDate) {
-                        setState(() {
-                          _selectedDate = newValue;
-                        });
-                      }
-                    },
-                    items: _monthlyConsumptionData.keys.map((String key) {
-                      return DropdownMenuItem<String>(
-                        value: key,
-                        child: Text(key),
-                      );
-                    }).toList(),
+                    color: Colors.grey[600],
                   ),
                 ),
               ],
             ),
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: '${_monthlyConsumptionData[_selectedDate] ?? 0.0}',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.grey[900],
-                      ),
-                    ),
-                    TextSpan(
-                      text: ' liters',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildValveControlCard() {
     return Card(
@@ -346,25 +327,27 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       drawer: CustomDrawer(),
-      appBar: AppBar(
-        title: Text(
-          'Water Dashboard',
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => NotificationPage()),
-              );
-            },
-          ),
-        ],
-      ),
+     appBar: AppBar(
+  title: Text(
+    'Water Dashboard',
+    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
+  ),
+  centerTitle: true,
+  elevation: 0,
+  backgroundColor: Colors.blue, // <-- Add explicit background color
+  actions: [
+    IconButton(
+      icon: Icon(Icons.notifications),
+      // Remove color: Colors.white to use default icon color
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => NotificationPage()),
+        );
+      },
+    ),
+  ],
+),
       body: Padding(
         padding: const EdgeInsets.all(10.0),
         child: SingleChildScrollView(

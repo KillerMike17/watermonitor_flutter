@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:login_ui/pages/Bill/bill_payment.dart';
 import 'package:login_ui/pages/SupportTicket/ticket_screen.dart';
@@ -6,9 +7,17 @@ import 'package:login_ui/pages/login/login_screen.dart';
 import 'package:login_ui/providers/auth_provider.dart';
 import 'package:login_ui/widgets/custom_drawer.dart';
 import 'package:provider/provider.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (defaultTargetPlatform == TargetPlatform.android) {
+  WebViewPlatform.instance = AndroidWebViewPlatform();
+} else if (defaultTargetPlatform == TargetPlatform.iOS) {
+  WebViewPlatform.instance = WebKitWebViewPlatform();
+}
   runApp(
     ChangeNotifierProvider(
       create: (context) => AuthProvider(),

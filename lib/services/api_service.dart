@@ -1,13 +1,19 @@
 import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:login_ui/pages/Bill/bill_payment.dart';
+import '../models/payment_dto.dart';
+import '../services/payment_service.dart';
 
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ApiService {
   final Dio _dio = Dio();
   static const String _baseUrl =
-      'http://localhost:3001/'; // Change this to your base URL
+      'https://water-monitoring-api-k06t.onrender.com/'; // Change this to your base URL
   // 'https://water-monitoring-api-k06t.onrender.com/';
 
   ApiService() {
@@ -21,8 +27,6 @@ class ApiService {
 
     _setupInterceptors();
   }
-
-
 
   void _setupInterceptors() {
     _dio.interceptors.add(InterceptorsWrapper(
@@ -95,50 +99,176 @@ class ApiService {
     }
   }
 
-    // in api_service.dart
+  // in api_service.dart
   Future<void> toggleValve({
-  required bool status,
-}) async {
-  try {
-    final prefs = await SharedPreferences.getInstance();
+    required bool status,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('accessToken');
-    final userJson =
-        prefs.getString('user'); // Make sure to store this during login
-    if (userJson != null) {
-      final decodedUser = json.decode(userJson) as Map<String, dynamic>;
-      final deviceId =
-          decodedUser['deviceId']?.toString(); // Ensure uuid is treated as string
+      final userJson =
+          prefs.getString('user'); // Make sure to store this during login
+      if (userJson != null) {
+        final decodedUser = json.decode(userJson) as Map<String, dynamic>;
+        final deviceId = decodedUser['deviceId']
+            ?.toString(); // Ensure uuid is treated as string
 
-      // Set headers
+        // Set headers
+        final headers = {
+          'Authorization': token, // Add token to headers
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        };
+        final response = await _dio.patch(
+          'sensor/valvechange',
+          options: Options(headers: headers), // Pass headers in options
+
+          data: {
+            'status': status,
+            'deviceId': deviceId,
+          },
+        );
+        if (response.statusCode != 200) {
+          throw DioException(
+            requestOptions: response.requestOptions,
+            error: 'Valve change failed',
+            response: response,
+            type: DioExceptionType.badResponse,
+          );
+        }
+      }
+    } catch (e) {
+      // Handle any exceptions that occur
+      rethrow;
+    }
+  }
+
+  // in api_service.dart
+  Future<BillingInfo> getPaymentInfo() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('accessToken');
+      final userJson = prefs.getString('user');
+
+      if (userJson == null || token == null) {
+        throw Exception('User or token information missing. Please log in.');
+      }
+
+      final decodedUser = json.decode(userJson) as Map<String, dynamic>;
+      final uuid = decodedUser['uuid']?.toString();
+
+      if (uuid == null) {
+        throw Exception('User UUID is missing.');
+      }
+
       final headers = {
-        'Authorization': token, // Add token to headers
+        'Authorization': token,
         "Content-Type": "application/json",
         "Accept": "application/json",
       };
-      final response = await _dio.patch(
-        'sensor/valvechange',
-        options: Options(headers: headers), // Pass headers in options
 
-        data: {
-          'status': status,
-          'deviceId': deviceId,
-        },
+      final response = await _dio.get(
+        'payment/info/$uuid',
+        options: Options(headers: headers),
       );
-      if (response.statusCode != 200) {
+
+      if (response.statusCode == 200) {
+        print(response.data);
+        if (response.data['ok'] == true && response.data['val'] != null) {
+          return BillingInfo.fromJson(response.data['val']);
+        } else if (response.data['ok'] == false &&
+            response.data['code'] == 404) {
+          var date = DateTime.now();
+          return BillingInfo(
+              status: 'paid',
+              uuid: '',
+              userId: '',
+              dueDate: date,
+              amount: 0,
+              breakdown: []);
+        } else {
+          throw Exception(
+              'API response indicates an error or missing data: ${response.data['error'] ?? 'No error message'}');
+        }
+      } else {
         throw DioException(
           requestOptions: response.requestOptions,
-          error: 'Valve change failed',
+          error: 'Failed to get payment info: ${response.statusCode}',
           response: response,
           type: DioExceptionType.badResponse,
         );
       }
+    } on DioException catch (e) {
+      print('Dio error getting payment info: $e');
+      if (e.response != null) {
+        print('Error response data: ${e.response!.data}');
+        throw Exception(
+            'Failed to load billing information: ${e.response!.data['error'] ?? 'Server error'}');
+      }
+      throw Exception('Failed to load billing information: ${e.message}');
+    } catch (e) {
+      print('Unexpected error getting payment info: $e');
+      throw Exception('An unexpected error occurred: $e');
     }
-  } catch (e) {
-    // Handle any exceptions that occur
-    rethrow;
   }
-}
 
+  // in api_service.dart
+  Future<List<dynamic>?> getPaymentHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('accessToken');
+      final userJson = prefs.getString('user');
+
+      if (userJson == null || token == null) {
+        throw Exception('User or token information missing. Please log in.');
+      }
+
+      final decodedUser = json.decode(userJson) as Map<String, dynamic>;
+      final id = decodedUser['_id']?.toString();
+
+      if (id == null) {
+        throw Exception('User UUID is missing.');
+      }
+
+      final headers = {
+        'Authorization': token,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      };
+
+      final response = await _dio.get(
+        'payment/history/$id',
+        options: Options(headers: headers),
+      );
+
+      if (response.statusCode == 200) {
+        if (response.data['ok'] == true && response.data['val'] != null) {
+          return response.data['val'];
+        } else {
+          throw Exception(
+              'API response indicates an error or missing data: ${response.data['error'] ?? 'No error message'}');
+        }
+      } else {
+        throw DioException(
+          requestOptions: response.requestOptions,
+          error: 'Failed to get payment info: ${response.statusCode}',
+          response: response,
+          type: DioExceptionType.badResponse,
+        );
+      }
+    } on DioException catch (e) {
+      print('Dio error getting payment info: $e');
+      if (e.response != null) {
+        print('Error response data: ${e.response!.data}');
+        throw Exception(
+            'Failed to load billing information: ${e.response!.data['error'] ?? 'Server error'}');
+      }
+      throw Exception('Failed to load billing information: ${e.message}');
+    } catch (e) {
+      print('Unexpected error getting payment info: $e');
+      throw Exception('An unexpected error occurred: $e');
+    }
+  }
 
   // get ticket info
   Future<Response> getSupportTickets() async {
@@ -153,10 +283,16 @@ class ApiService {
         "Content-Type": "application/json",
         "Accept": "application/json",
       };
+      final userJson =
+          prefs.getString('user'); // Make sure to store this during login
+
+      final decodedUser = json.decode(userJson!) as Map<String, dynamic>;
+      final userId =
+          decodedUser['_id']?.toString(); // Ensure uuid is treated as string
 
       // Make GET request to tickets endpoint
       return await _dio.get(
-        'ticket',
+        'ticket?userId=$userId',
         options: Options(headers: headers), // Pass headers in options
       );
     } catch (e) {
@@ -165,29 +301,35 @@ class ApiService {
   }
 
   // Get notifications
-Future<Response> getNotifications() async {
-  try {
-    // Get auth token from shared preferences
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('accessToken');
+  Future<Response> getNotifications() async {
+    try {
+      // Get auth token from shared preferences
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('accessToken');
 
-    // Set headers
-    final headers = {
-      'Authorization': token,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
+      // Set headers
+      final headers = {
+        'Authorization': token,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      };
+      final userJson =
+          prefs.getString('user'); // Make sure to store this during login
 
-    // Make GET request to notifications endpoint
-    return await _dio.get(
-      'notification?limit=10&page=1&sort=createdAt&sortOrder=-1', // adjust the endpoint if needed
-      options: Options(headers: headers),
-    );
-  } catch (e) {
-    rethrow;
+      final decodedUser = json.decode(userJson!) as Map<String, dynamic>;
+      final userId =
+          decodedUser['_id']?.toString(); // Ensure uuid is treated as string
+
+
+      // Make GET request to notifications endpoint
+      return await _dio.get(
+        'notification?userId=$userId&limit=10&page=1&sort=createdAt&sortOrder=-1', // adjust the endpoint if needed
+        options: Options(headers: headers),
+      );
+    } catch (e) {
+      rethrow;
+    }
   }
-}
-
 
   // In ApiService.dart
   Future<Object> createSupportTicket({
