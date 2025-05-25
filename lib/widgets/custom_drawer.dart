@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:login_ui/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:login_ui/pages/profile/profile.dart';
+import 'package:login_ui/pages/privacy policy/pp.dart';
+import 'package:login_ui/pages/about/about.dart';
 
 class CustomDrawer extends StatefulWidget {
   @override
@@ -102,7 +104,10 @@ class _CustomDrawerState extends State<CustomDrawer> {
             title: const Text('Privacy Policy'),
             onTap: () {
               Navigator.pop(context);
-              // Navigate to privacy policy
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => PrivacyPolicyScreen()),
+              );
             },
           ),
           ListTile(
@@ -110,7 +115,10 @@ class _CustomDrawerState extends State<CustomDrawer> {
             title: const Text('About'),
             onTap: () {
               Navigator.pop(context);
-              // Navigate to about page
+             Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AboutScreen()),
+              );
             },
           ),
           ListTile(

@@ -242,8 +242,8 @@ class _LoginScreenState extends State<LoginScreen> {
       final prefs = await SharedPreferences.getInstance();
       
       // Save authentication token
-      if (response.data['authtoken']?['accessToken'] != null) {
-        await prefs.setString('accessToken', response.data['authtoken']['accessToken']);
+      if (response.data['authToken']?['accessToken'] != null) {
+        await prefs.setString('accessToken', response.data['authToken']['accessToken']);
       }
       
       // Save user data

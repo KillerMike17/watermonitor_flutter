@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:login_ui/pages/notificaiton/notification_page.dart';
+import 'package:login_ui/services/api_service.dart';
 import 'package:login_ui/widgets/custom_drawer.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(ProfileApp());
@@ -26,8 +30,35 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String name = 'Mike Y';
-  String address = 'Address';
+  final ApiService _apiService = ApiService();
+
+  dynamic? name;
+  dynamic? address;
+  dynamic? email;
+  dynamic? userData; // Define user variable to store user
+  @override
+  void initState() {
+    super.initState();
+    _loadUUID();
+  }
+
+  Future<void> _loadUUID() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userJson = prefs.getString('user');
+
+    if (userJson != null) {
+      final decodedUser = json.decode(userJson) as Map<String, dynamic>;
+      setState(() {
+        userData = decodedUser;
+        name = ((decodedUser['firstName']?.toString() ?? '') +
+            (decodedUser['lastName']?.toString() ??
+                '')); // Ensure uuid is treated as string
+        email = (decodedUser['email']?.toString() ?? '');
+        address = (decodedUser['address']?.toString() ?? '');
+      });
+      print('Full user data: $userData');
+    }
+  }
 
   void _editName() {
     showDialog(
@@ -52,40 +83,6 @@ class _ProfilePageState extends State<ProfilePage> {
               onPressed: () {
                 setState(() {
                   name = nameController.text;
-                });
-                Navigator.of(context).pop();
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _editAddress() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        TextEditingController addressController =
-            TextEditingController(text: address);
-        return AlertDialog(
-          title: const Text('Edit Address'),
-          content: TextField(
-            controller: addressController,
-            decoration: const InputDecoration(labelText: 'Address'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  address = addressController.text;
                 });
                 Navigator.of(context).pop();
               },
@@ -168,9 +165,9 @@ class _ProfilePageState extends State<ProfilePage> {
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            const Text(
-              '+2519292085135',
-              style: TextStyle(fontSize: 18, color: Colors.grey),
+            Text(
+              email,
+              style: const TextStyle(fontSize: 18, color: Colors.grey),
             ),
             const SizedBox(height: 32),
             Expanded(
@@ -180,7 +177,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     leading: const Icon(Icons.location_on),
                     title: Text(address),
                     trailing: const Icon(Icons.arrow_forward_ios),
-                    onTap: _editAddress,
+                    // Removed onTap to make it non-editable
                   ),
                   const ListTile(
                     leading: Icon(Icons.language),
@@ -201,7 +198,8 @@ class _ProfilePageState extends State<ProfilePage> {
               onPressed: _logout,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
               ),
               child: const Text(
                 'Logout',

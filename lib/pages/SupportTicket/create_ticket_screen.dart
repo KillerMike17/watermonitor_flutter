@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:login_ui/pages/notificaiton/notification_page.dart';
+import 'package:login_ui/services/api_service.dart';
 
 class CreateSupportTicketPage extends StatefulWidget {
   @override
@@ -10,14 +12,74 @@ class _CreateSupportTicketPageState extends State<CreateSupportTicketPage> {
   final TextEditingController _descriptionController = TextEditingController();
   String? _selectedIssueType;
   final List<String> _issueTypes = [
-    'Sensor Issue',
-    'Connection Problem',
-    'Hardware Fault',
-    'Software Bug',
-    'Other'
+    'Sensor',
+    'Hardware'
   ];
 
-  void _submitTicket() {
+  Future<Map<String, String>?> _submitToBackend(String description, String issueType) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(child: CircularProgressIndicator()),
+      );
+
+      final apiService = ApiService();
+      final response = await apiService.createSupportTicket(
+        description: description,
+        type: issueType,
+      );
+
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Support ticket submitted successfully!'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Return the new ticket data
+      return {
+        'issueType': issueType,
+        'description': description,
+        'status': 'Open',
+        'date': 'Just now'
+      };
+    } on DioException catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(ApiService.handleError(e)),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return null;
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('An unexpected error occurred'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return null;
+    }
+  }
+
+  void _submitTicket() async {
     final description = _descriptionController.text;
     final issueType = _selectedIssueType;
 
@@ -34,7 +96,6 @@ class _CreateSupportTicketPageState extends State<CreateSupportTicketPage> {
       return;
     }
 
-    // Show confirmation dialog before submitting
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -46,12 +107,12 @@ class _CreateSupportTicketPageState extends State<CreateSupportTicketPage> {
             child: Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context); // Close dialog
-              Navigator.pop(
-                context, 
-                {'issueType': issueType, 'description': description}
-              );
+              final newTicket = await _submitToBackend(description, issueType);
+              if (newTicket != null) {
+                Navigator.pop(context, newTicket); // Return the new ticket data
+              }
             },
             child: Text('Submit'),
             style: ElevatedButton.styleFrom(

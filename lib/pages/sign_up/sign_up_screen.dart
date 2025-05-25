@@ -79,7 +79,7 @@ class SignupScreen extends StatelessWidget {
                     if (isValidForm) {
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(
-                          builder: (context) => otpScreen(
+                          builder: (context) => OtpScreen(
                               email: email.toString(),
                               fromSignup: fromSignup),
                         ),

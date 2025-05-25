@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:login_ui/pages/Bill/bill_page.dart';
+import 'package:login_ui/pages/Bill/bill_payment.dart';
 import 'package:login_ui/pages/SupportTicket/ticket_screen.dart';
 import 'package:login_ui/pages/home/home_page.dart';
 import 'package:login_ui/pages/login/login_screen.dart';
@@ -87,7 +87,7 @@ class _HomePageState extends State<HomePage> {
   // Initialize your pages properly
   final List<Widget> _pages = [
      DashboardPage(),
-    BillingPage(),
+    BillingDetailsPage(),
     TicketListPage(),
   ];
 

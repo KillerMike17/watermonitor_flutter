@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'bill_history.dart';
 
 class BillingDetailsPage extends StatelessWidget {
-  final String accountNumber;
   final double monthlyConsumption = 150.0; // in liters
   final double pricePerLiter = 0.05;
+  final DateTime dueDate = DateTime.now().add(Duration(days: 15));
 
-  BillingDetailsPage({required this.accountNumber});
+  BillingDetailsPage();
 
   @override
   Widget build(BuildContext context) {
     final totalCost = monthlyConsumption * pricePerLiter;
+    final formattedDueDate = '${dueDate.day}/${dueDate.month}/${dueDate.year}';
 
     return Scaffold(
       appBar: AppBar(
@@ -22,8 +23,7 @@ class BillingDetailsPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      BillingHistoryPage(accountNumber: accountNumber),
+                  builder: (context) => BillingHistoryPage(),
                 ),
               );
             },
@@ -34,108 +34,169 @@ class BillingDetailsPage extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Billing Summary
-            Container(
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  Text('Account: $accountNumber',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Water Used:'),
-                      Text('$monthlyConsumption L'),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Rate:'),
-                      Text('\$$pricePerLiter/L'),
-                    ],
-                  ),
-                  Divider(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Total Due:',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text('\$${totalCost.toStringAsFixed(2)}',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.red[700],
-                              fontSize: 18)),
-                    ],
-                  ),
-                ],
+            // Bill Overview
+            Text('Current Bill', style: Theme.of(context).textTheme.titleLarge),
+            SizedBox(height: 10),
+            
+            // Billing Summary Card
+            Card(
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    _buildBillingRow('Billing Period', 'This Month'),
+                    _buildBillingRow('Due Date', formattedDueDate),
+                    Divider(height: 24),
+                    _buildBillingRow('Water Used', '$monthlyConsumption L'),
+                    _buildBillingRow('Rate', '\$$pricePerLiter/L'),
+                    Divider(height: 24),
+                    _buildBillingRow(
+                      'Total Amount Due',
+                      '\$${totalCost.toStringAsFixed(2)}',
+                      isTotal: true,
+                    ),
+                  ],
+                ),
               ),
             ),
 
             SizedBox(height: 30),
 
-            // Payment Section
-            Text('Pay with:', style: TextStyle(fontSize: 16)),
+            // Payment Methods Section
+            Text('Payment Methods', style: Theme.of(context).textTheme.titleLarge),
             SizedBox(height: 10),
-            ListTile(
-              leading: Icon(Icons.payment),
-              title: Text('Chapa'),
-              tileColor: Colors.grey[100],
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-
-            Spacer(),
-
-            // History Button - Improved
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          BillingHistoryPage(accountNumber: accountNumber),
-                    ),
-                  );
-                },
-                child: Text('VIEW PAYMENT HISTORY'),
-                style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  foregroundColor: Colors.blue,
-                  side: BorderSide(color: Colors.blue),
-                ),
-              ),
-            ),
-            SizedBox(height: 10),
-
-            // Pay Button
+            
+            // Chapa Payment Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Processing payment with Chapa')));
+                  _processChapaPayment(context);
                 },
-                child: Text('Pay Now'),
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: Colors.blue,
+                  backgroundColor: Colors.purple, // Chapa's brand color
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.payment, color: Colors.white),
+                    SizedBox(width: 10),
+                    Text('Pay with Chapa', style: TextStyle(color: Colors.white)),
+                  ],
                 ),
               ),
+            ),
+            SizedBox(height: 10),
+            Text('Other payment methods coming soon', 
+                style: TextStyle(color: Colors.grey, fontSize: 12)),
+
+            Spacer(),
+
+            // Payment History Button
+            _buildActionButton(
+              context,
+              'VIEW PAYMENT HISTORY',
+              Icons.history,
+              Colors.blue,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BillingHistoryPage(),
+                  ),
+                );
+              },
             ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildBillingRow(String label, String value, {bool isTotal = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+          )),
+          Text(value, style: TextStyle(
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            color: isTotal ? Colors.red[700] : null,
+            fontSize: isTotal ? 18 : null,
+          )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
+    BuildContext context,
+    String text,
+    IconData icon,
+    Color color,
+    VoidCallback onPressed,
+  ) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          foregroundColor: color,
+          side: BorderSide(color: color),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20),
+            SizedBox(width: 10),
+            Text(text),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _processChapaPayment(BuildContext context) {
+    // Show processing dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text('Processing Payment'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 20),
+            Text('Connecting to Chapa...'),
+          ],
+        ),
+      ),
+    );
+
+    // Simulate payment processing
+    Future.delayed(Duration(seconds: 2), () {
+      Navigator.pop(context); // Close the dialog
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Payment processed successfully with Chapa'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    });
   }
 }

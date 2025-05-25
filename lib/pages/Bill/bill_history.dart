@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
 class BillingHistoryPage extends StatefulWidget {
-  final String accountNumber;
-
-  const BillingHistoryPage({Key? key, required this.accountNumber}) : super(key: key);
+  const BillingHistoryPage({Key? key}) : super(key: key);
 
   @override
   _BillingHistoryPageState createState() => _BillingHistoryPageState();
